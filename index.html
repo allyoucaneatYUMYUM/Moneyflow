@@ -1138,7 +1138,7 @@
 
 <script>
 // ===== DATA STORE =====
-const state = {
+const DEFAULT_DATA = {
   transactions: [
     { id:1, name:'全聯福利中心', amount:320, category:'飲食', date:'2026-04-24', ai:false },
     { id:2, name:'UNIQLO', amount:1890, category:'服飾', date:'2026-04-22', ai:false },
@@ -1155,6 +1155,34 @@ const state = {
     { id:1, code:'2330 台積電', price:925, shares:10, cost:9276.31, date:'2026-04-20' },
     { id:2, code:'0050 元大台灣50', price:183.5, shares:50, cost:9188.69, date:'2026-04-08' },
   ],
+};
+
+// ===== LOCALSTORAGE HELPERS =====
+const STORAGE_KEY = 'moneyflow_data';
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch(e) { console.warn('載入資料失敗', e); }
+  return null;
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      transactions: state.transactions,
+      incomes: state.incomes,
+      stocks: state.stocks,
+    }));
+  } catch(e) { console.warn('儲存資料失敗', e); }
+}
+
+const saved = loadState();
+const state = {
+  transactions: saved ? saved.transactions : DEFAULT_DATA.transactions,
+  incomes:      saved ? saved.incomes      : DEFAULT_DATA.incomes,
+  stocks:       saved ? saved.stocks       : DEFAULT_DATA.stocks,
   currentFilter: 'all'
 };
 
@@ -1302,6 +1330,7 @@ function addTransaction() {
   state.transactions.unshift({ id: Date.now(), name, amount, category, date: date || new Date().toISOString().split('T')[0], ai: false });
   document.getElementById('txName').value = '';
   document.getElementById('txAmount').value = '';
+  saveState();
   renderTransactions();
   updateOverview();
   showToast('消費記錄已新增');
@@ -1317,6 +1346,7 @@ function addIncome() {
   state.incomes.unshift({ id: Date.now(), name, amount, type, date: date || new Date().toISOString().split('T')[0], fixed: false });
   document.getElementById('incomeName').value = '';
   document.getElementById('incomeAmount').value = '';
+  saveState();
   renderIncomes();
   updateOverview();
   showToast('收入記錄已新增');
@@ -1332,6 +1362,7 @@ function addFixedIncome() {
   state.incomes.unshift({ id: Date.now(), name: name + ' (固定)', amount, type: '薪資', date: dateStr, fixed: true });
   document.getElementById('fixedName').value = '';
   document.getElementById('fixedAmount').value = '';
+  saveState();
   renderIncomes();
   updateOverview();
   showToast('固定收入已設定，每月自動新增');
@@ -1360,6 +1391,7 @@ function addStock() {
   document.getElementById('stockPrice').value = '';
   document.getElementById('stockShares').value = '';
   document.getElementById('stockCalcResult').textContent = 'NT$ 0';
+  saveState();
   renderStocks();
   updateOverview();
   showToast('股票交易已記錄');
