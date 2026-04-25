@@ -1,0 +1,1421 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MoneyFlow - 個人記帳</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #0a0c10;
+    --bg-card: #111318;
+    --bg-elevated: #1a1d24;
+    --bg-input: #1e2028;
+    --accent-gold: #c9a84c;
+    --accent-gold-light: #e8c76a;
+    --accent-green: #4caf82;
+    --accent-red: #e05c5c;
+    --accent-blue: #5c8fe0;
+    --accent-purple: #9b6de0;
+    --text-primary: #f0ede8;
+    --text-secondary: #8b8d96;
+    --text-muted: #4a4d58;
+    --border: #22252f;
+    --border-bright: #2e3240;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    font-family: 'Noto Sans TC', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .phone-wrapper {
+    width: 100%;
+    max-width: 420px;
+    min-height: 100vh;
+    background: var(--bg-deep);
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ===== TOP BAR ===== */
+  .topbar {
+    padding: 52px 24px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: linear-gradient(180deg, #0d0f14 0%, transparent 100%);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .logo {
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    color: var(--accent-gold);
+  }
+
+  .logo span { color: var(--text-primary); }
+
+  .month-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-bright);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .month-selector .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-gold); }
+
+  /* ===== NAV TABS ===== */
+  .nav-tabs {
+    display: flex;
+    padding: 0 24px;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+
+  .nav-tab {
+    flex: 1;
+    padding: 9px 4px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .nav-tab.active {
+    color: var(--accent-gold);
+    border-bottom-color: var(--accent-gold);
+  }
+
+  /* ===== CONTENT ===== */
+  .content { padding: 0 16px 100px; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ===== HERO BALANCE ===== */
+  .balance-hero {
+    background: linear-gradient(135deg, #1a1508 0%, #141209 50%, #0f1118 100%);
+    border: 1px solid #2a2410;
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .balance-hero::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(201,168,76,0.12) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .balance-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+
+  .balance-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 36px;
+    font-weight: 500;
+    color: var(--text-primary);
+    letter-spacing: -1px;
+    margin-bottom: 4px;
+  }
+
+  .balance-amount .currency {
+    font-size: 18px;
+    color: var(--accent-gold);
+    margin-right: 4px;
+  }
+
+  .balance-sub {
+    font-size: 12px;
+    color: var(--accent-green);
+    font-weight: 500;
+  }
+
+  .balance-sub.negative { color: var(--accent-red); }
+
+  .balance-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+
+  .balance-pill {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+
+  .balance-pill .pill-label { font-size: 10px; color: var(--text-muted); margin-bottom: 4px; letter-spacing: 0.5px; }
+  .balance-pill .pill-value { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; }
+  .pill-income .pill-value { color: var(--accent-green); }
+  .pill-expense .pill-value { color: var(--accent-red); }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 12px;
+  }
+
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+  }
+
+  .card-action {
+    font-size: 12px;
+    color: var(--accent-gold);
+    cursor: pointer;
+    font-weight: 500;
+    background: rgba(201,168,76,0.1);
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: none;
+    outline: none;
+    transition: background 0.2s;
+  }
+
+  .card-action:hover { background: rgba(201,168,76,0.18); }
+
+  /* ===== FORM ELEMENTS ===== */
+  .form-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .form-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .form-label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .form-input {
+    background: var(--bg-input);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: 'DM Mono', monospace;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    width: 100%;
+  }
+
+  .form-input:focus {
+    border-color: var(--accent-gold);
+    background: #1c1e28;
+  }
+
+  select.form-input {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b8d96' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, var(--accent-gold) 0%, #a8862e 100%);
+    border: none;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    font-weight: 700;
+    font-family: 'Noto Sans TC', sans-serif;
+    color: #0a0c10;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.5px;
+  }
+
+  .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+
+  .btn-secondary {
+    flex: 1;
+    padding: 11px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'Noto Sans TC', sans-serif;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary:hover { border-color: var(--accent-gold); color: var(--accent-gold); }
+
+  /* ===== UPLOAD ZONE ===== */
+  .upload-zone {
+    border: 2px dashed var(--border-bright);
+    border-radius: var(--radius);
+    padding: 28px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    background: var(--bg-input);
+    margin-bottom: 16px;
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.dragover {
+    border-color: var(--accent-gold);
+    background: rgba(201,168,76,0.05);
+  }
+
+  .upload-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 12px;
+    background: var(--bg-elevated);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-bright);
+  }
+
+  .upload-icon svg { width: 22px; height: 22px; }
+
+  .upload-text { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+  .upload-sub { font-size: 11px; color: var(--text-muted); }
+
+  .upload-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* ===== DIVIDER ===== */
+  .or-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .or-divider::before, .or-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* ===== CATEGORY CHIPS ===== */
+  .category-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .chip {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid var(--border-bright);
+    color: var(--text-secondary);
+    background: var(--bg-input);
+    transition: all 0.2s;
+  }
+
+  .chip.selected {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+    background: rgba(201,168,76,0.12);
+  }
+
+  /* ===== TRANSACTION LIST ===== */
+  .tx-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .tx-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+
+  .tx-item:hover { border-color: var(--border-bright); }
+
+  .tx-icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  .tx-info { flex: 1; min-width: 0; }
+  .tx-name { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx-meta { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+  .tx-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  .tx-amount.expense { color: var(--accent-red); }
+  .tx-amount.income { color: var(--accent-green); }
+
+  /* ===== STOCK SECTION ===== */
+  .stock-calc-box {
+    background: linear-gradient(135deg, #0d1520 0%, #0f1118 100%);
+    border: 1px solid #1a2535;
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+
+  .calc-result {
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    margin-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border-bright);
+  }
+
+  .calc-result-label { font-size: 12px; color: var(--text-muted); }
+  .calc-result-value {
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--accent-blue);
+  }
+
+  .stock-item {
+    display: flex;
+    align-items: center;
+    padding: 14px;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .stock-badge {
+    background: rgba(92,143,224,0.12);
+    border: 1px solid rgba(92,143,224,0.3);
+    color: var(--accent-blue);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  .stock-info { flex: 1; }
+  .stock-name { font-size: 13px; font-weight: 600; }
+  .stock-detail { font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+
+  .stock-cost {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    color: var(--accent-blue);
+    font-weight: 500;
+  }
+
+  /* ===== SUMMARY SECTION ===== */
+  .summary-month {
+    text-align: center;
+    padding: 16px 0 8px;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: 1px;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .summary-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .summary-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 0 0 var(--radius) var(--radius);
+  }
+
+  .summary-card.s-daily::after { background: var(--accent-red); }
+  .summary-card.s-stock::after { background: var(--accent-blue); }
+
+  .summary-card-full {
+    background: linear-gradient(135deg, #141209 0%, #0f1118 100%);
+    border: 1px solid #2a2410;
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 10px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .summary-card-full::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    border-radius: 0 0 var(--radius) var(--radius);
+    background: linear-gradient(90deg, var(--accent-gold), var(--accent-gold-light));
+  }
+
+  .s-label { font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+  .s-amount { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; }
+  .s-amount.red { color: var(--accent-red); }
+  .s-amount.blue { color: var(--accent-blue); }
+  .s-amount.gold { color: var(--accent-gold); font-size: 28px; }
+
+  .s-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  .donut-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+    position: relative;
+  }
+
+  .donut-center {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  .donut-center .d-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; }
+  .donut-center .d-value { font-family: 'DM Mono', monospace; font-size: 18px; color: var(--text-primary); font-weight: 500; }
+
+  /* ===== LEGEND ===== */
+  .legend { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+
+  .legend-item { display: flex; align-items: center; justify-content: space-between; }
+  .legend-left { display: flex; align-items: center; gap: 10px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .legend-name { font-size: 13px; font-weight: 500; }
+  .legend-pct { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+  .legend-val { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; }
+
+  .progress-bar-container { margin-bottom: 14px; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+  .progress-label span:first-child { color: var(--text-secondary); font-weight: 600; }
+  .progress-label span:last-child { font-family: 'DM Mono', monospace; color: var(--text-secondary); }
+  .progress-track { background: var(--bg-elevated); border-radius: 4px; height: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+
+  /* ===== INCOME SECTION ===== */
+  .income-toggle {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .toggle-btn {
+    flex: 1;
+    padding: 9px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'Noto Sans TC', sans-serif;
+    cursor: pointer;
+    border: 1.5px solid var(--border-bright);
+    background: var(--bg-input);
+    color: var(--text-muted);
+    transition: all 0.2s;
+  }
+
+  .toggle-btn.active {
+    background: rgba(76,175,130,0.12);
+    border-color: var(--accent-green);
+    color: var(--accent-green);
+  }
+
+  /* ===== BOTTOM NAV ===== */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 420px;
+    background: rgba(17,19,24,0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding: 8px 0 20px;
+    z-index: 100;
+  }
+
+  .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    padding: 6px 0;
+    transition: all 0.2s;
+  }
+
+  .nav-item .nav-icon {
+    width: 24px; height: 24px;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .nav-item .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: 0.3px;
+  }
+
+  .nav-item.active .nav-label { color: var(--accent-gold); }
+  .nav-item.active .nav-icon svg path,
+  .nav-item.active .nav-icon svg rect,
+  .nav-item.active .nav-icon svg circle { fill: var(--accent-gold); }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 90px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--bg-elevated);
+    border: 1px solid var(--accent-green);
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-green);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 200;
+    white-space: nowrap;
+    max-width: 90%;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .section.active > * {
+    animation: fadeUp 0.35s ease forwards;
+  }
+
+  .section.active > *:nth-child(1) { animation-delay: 0s; }
+  .section.active > *:nth-child(2) { animation-delay: 0.05s; }
+  .section.active > *:nth-child(3) { animation-delay: 0.1s; }
+  .section.active > *:nth-child(4) { animation-delay: 0.15s; }
+  .section.active > *:nth-child(5) { animation-delay: 0.2s; }
+
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .tag-ai { background: rgba(155,109,224,0.15); color: var(--accent-purple); border: 1px solid rgba(155,109,224,0.3); }
+  .tag-manual { background: rgba(139,141,150,0.1); color: var(--text-muted); border: 1px solid var(--border); }
+  .tag-fixed { background: rgba(76,175,130,0.1); color: var(--accent-green); border: 1px solid rgba(76,175,130,0.3); }
+
+  .modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 150;
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: flex-end;
+  }
+
+  .modal-backdrop.show { display: flex; }
+
+  .modal {
+    background: var(--bg-card);
+    border: 1px solid var(--border-bright);
+    border-radius: 24px 24px 0 0;
+    padding: 24px;
+    width: 100%;
+    max-width: 420px;
+    animation: slideUp 0.3s ease;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
+
+  .modal-handle {
+    width: 36px; height: 4px;
+    background: var(--border-bright);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  .modal-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+  }
+</style>
+</head>
+<body>
+<div class="phone-wrapper">
+
+  <!-- Top Bar -->
+  <div class="topbar">
+    <div class="logo">Money<span>Flow</span></div>
+    <div class="month-selector">
+      <div class="dot"></div>
+      <span id="currentMonth">2026 年 4 月</span>
+    </div>
+  </div>
+
+  <!-- Nav Tabs -->
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-tab="overview">總覽</div>
+    <div class="nav-tab" data-tab="daily">日常消費</div>
+    <div class="nav-tab" data-tab="income">收入</div>
+    <div class="nav-tab" data-tab="stock">股票</div>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- OVERVIEW SECTION -->
+    <div class="section active" id="section-overview">
+      <div class="balance-hero">
+        <div class="balance-label">本月淨餘</div>
+        <div class="balance-amount">
+          <span class="currency">NT$</span><span id="netBalance">18,240</span>
+        </div>
+        <div class="balance-sub" id="balanceStatus">收支良好 +12.4%</div>
+        <div class="balance-row">
+          <div class="balance-pill pill-income">
+            <div class="pill-label">本月收入</div>
+            <div class="pill-value" id="totalIncome">+58,000</div>
+          </div>
+          <div class="balance-pill pill-expense">
+            <div class="pill-label">總支出</div>
+            <div class="pill-value" id="totalExpense">-39,760</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary Cards -->
+      <div class="summary-grid">
+        <div class="summary-card s-daily">
+          <div class="s-label">日常消費</div>
+          <div class="s-amount red" id="ov-daily">21,360</div>
+          <div class="s-sub" id="ov-daily-count">15 筆記錄</div>
+        </div>
+        <div class="summary-card s-stock">
+          <div class="s-label">股票投入</div>
+          <div class="s-amount blue" id="ov-stock">18,400</div>
+          <div class="s-sub" id="ov-stock-count">3 筆交易</div>
+        </div>
+      </div>
+
+      <div class="summary-card-full">
+        <div class="s-label">本月合計支出</div>
+        <div class="s-amount gold" id="ov-total">39,760</div>
+        <div class="s-sub">佔收入 <strong style="color:var(--accent-gold)" id="ov-pct">68.5%</strong></div>
+      </div>
+
+      <!-- Progress Bars -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">支出分析</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-label"><span>飲食</span><span>NT$ 6,240</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:62%;background:var(--accent-red)"></div></div>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-label"><span>服飾</span><span>NT$ 3,800</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:38%;background:var(--accent-purple)"></div></div>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-label"><span>按摩 / 保健</span><span>NT$ 2,800</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:28%;background:var(--accent-gold)"></div></div>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-label"><span>電費 / 水費</span><span>NT$ 1,820</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:18%;background:var(--accent-blue)"></div></div>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-label"><span>其他</span><span>NT$ 6,700</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:67%;background:var(--text-muted)"></div></div>
+        </div>
+      </div>
+
+      <!-- Donut Chart -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">消費分佈</span></div>
+        <div class="donut-container">
+          <svg width="160" height="160" viewBox="0 0 160 160">
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#1a1d24" stroke-width="22"/>
+            <!-- Daily 53.7% -->
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#e05c5c" stroke-width="22"
+              stroke-dasharray="202.5 377" stroke-dashoffset="94.2" stroke-linecap="round" transform="rotate(-90 80 80)"/>
+            <!-- Stock 46.3% -->
+            <circle cx="80" cy="80" r="60" fill="none" stroke="#5c8fe0" stroke-width="22"
+              stroke-dasharray="174.5 377" stroke-dashoffset="-108.3" stroke-linecap="round" transform="rotate(-90 80 80)"/>
+          </svg>
+          <div class="donut-center">
+            <div class="d-label">總支出</div>
+            <div class="d-value">39,760</div>
+          </div>
+        </div>
+        <div class="legend">
+          <div class="legend-item">
+            <div class="legend-left">
+              <div class="legend-dot" style="background:var(--accent-red)"></div>
+              <div><div class="legend-name">日常消費</div><div class="legend-pct">53.7%</div></div>
+            </div>
+            <div class="legend-val" style="color:var(--accent-red)">21,360</div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-left">
+              <div class="legend-dot" style="background:var(--accent-blue)"></div>
+              <div><div class="legend-name">股票投入</div><div class="legend-pct">46.3%</div></div>
+            </div>
+            <div class="legend-val" style="color:var(--accent-blue)">18,400</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAILY SECTION -->
+    <div class="section" id="section-daily">
+
+      <!-- Upload Zone -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">發票辨識</span>
+          <span class="tag tag-ai">AI 自動分類</span>
+        </div>
+        <div class="upload-zone" id="uploadZone">
+          <input type="file" accept="image/*" capture="camera" id="invoiceFile" onchange="handleUpload(event)">
+          <div class="upload-icon">
+            <svg viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="4" width="18" height="14" rx="2" stroke="#c9a84c" stroke-width="1.5"/>
+              <circle cx="11" cy="11" r="3.5" stroke="#c9a84c" stroke-width="1.5"/>
+              <path d="M8 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" stroke="#c9a84c" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <div class="upload-text">拍攝或上傳發票</div>
+          <div class="upload-sub">支援 JPG、PNG，AI 將自動辨識金額與類別</div>
+        </div>
+
+        <div class="or-divider">或手動輸入</div>
+
+        <!-- Manual Input -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">商店名稱</label>
+            <input type="text" class="form-input" id="txName" placeholder="ex: 7-ELEVEN">
+          </div>
+          <div class="form-group" style="max-width:100px">
+            <label class="form-label">金額 NT$</label>
+            <input type="number" class="form-input" id="txAmount" placeholder="0">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">類別</label>
+            <select class="form-input" id="txCategory">
+              <option value="飲食">飲食</option>
+              <option value="服飾">服飾</option>
+              <option value="按摩 / 保健">按摩 / 保健</option>
+              <option value="電費 / 水費">電費 / 水費</option>
+              <option value="交通">交通</option>
+              <option value="娛樂">娛樂</option>
+              <option value="教育">教育</option>
+              <option value="醫療">醫療</option>
+              <option value="其他">其他</option>
+            </select>
+          </div>
+          <div class="form-group" style="max-width:110px">
+            <label class="form-label">日期</label>
+            <input type="date" class="form-input" id="txDate">
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="addTransaction()">新增消費記錄</button>
+      </div>
+
+      <!-- Category Filter -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">本月記錄</span><button class="card-action">全部</button></div>
+        <div class="category-chips" id="filterChips">
+          <div class="chip selected" data-cat="all">全部</div>
+          <div class="chip" data-cat="飲食">飲食</div>
+          <div class="chip" data-cat="服飾">服飾</div>
+          <div class="chip" data-cat="按摩 / 保健">按摩</div>
+          <div class="chip" data-cat="電費 / 水費">電費</div>
+          <div class="chip" data-cat="交通">交通</div>
+        </div>
+        <div class="tx-list" id="txList">
+          <!-- populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- INCOME SECTION -->
+    <div class="section" id="section-income">
+      <div class="card">
+        <div class="card-header"><span class="card-title">新增收入</span></div>
+        <div class="income-toggle">
+          <button class="toggle-btn active" data-mode="manual" onclick="setIncomeMode('manual',this)">單筆輸入</button>
+          <button class="toggle-btn" data-mode="fixed" onclick="setIncomeMode('fixed',this)">固定每月</button>
+        </div>
+
+        <div id="manualIncomeForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">收入名稱</label>
+              <input type="text" class="form-input" id="incomeName" placeholder="ex: 薪資、獎金">
+            </div>
+            <div class="form-group" style="max-width:120px">
+              <label class="form-label">金額 NT$</label>
+              <input type="number" class="form-input" id="incomeAmount" placeholder="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">類型</label>
+              <select class="form-input" id="incomeType">
+                <option>薪資</option>
+                <option>獎金</option>
+                <option>兼職</option>
+                <option>投資收益</option>
+                <option>其他</option>
+              </select>
+            </div>
+            <div class="form-group" style="max-width:120px">
+              <label class="form-label">日期</label>
+              <input type="date" class="form-input" id="incomeDate">
+            </div>
+          </div>
+          <button class="btn-primary" onclick="addIncome()">新增收入</button>
+        </div>
+
+        <div id="fixedIncomeForm" style="display:none">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">收入名稱</label>
+              <input type="text" class="form-input" id="fixedName" placeholder="ex: 月薪">
+            </div>
+            <div class="form-group" style="max-width:120px">
+              <label class="form-label">每月金額 NT$</label>
+              <input type="number" class="form-input" id="fixedAmount" placeholder="0">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">每月發放日</label>
+              <select class="form-input" id="fixedDay">
+                <option value="1">每月 1 日</option>
+                <option value="5">每月 5 日</option>
+                <option value="10">每月 10 日</option>
+                <option value="15">每月 15 日</option>
+                <option value="25" selected>每月 25 日</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn-primary" onclick="addFixedIncome()">設定固定收入</button>
+        </div>
+      </div>
+
+      <!-- Income List -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">本月收入</span></div>
+        <div class="tx-list" id="incomeList"></div>
+      </div>
+    </div>
+
+    <!-- STOCK SECTION -->
+    <div class="section" id="section-stock">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">新增股票交易</span>
+          <span class="tag tag-ai">自動計算</span>
+        </div>
+        <div class="stock-calc-box">
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">股票代號/名稱</label>
+              <input type="text" class="form-input" id="stockCode" placeholder="ex: 2330 台積電">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">購買股價 NT$</label>
+              <input type="number" class="form-input" id="stockPrice" placeholder="0.00" oninput="calcStock()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">購買股數</label>
+              <input type="number" class="form-input" id="stockShares" placeholder="0" oninput="calcStock()">
+            </div>
+          </div>
+          <div class="calc-result">
+            <div>
+              <div class="calc-result-label">花費金額</div>
+              <div style="font-size:11px;color:var(--text-muted);margin-top:2px">含手續費 0.1425%</div>
+            </div>
+            <div class="calc-result-value" id="stockCalcResult">NT$ 0</div>
+          </div>
+        </div>
+        <button class="btn-primary" onclick="addStock()">記錄這筆交易</button>
+      </div>
+
+      <!-- Stock List -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">本月交易記錄</span></div>
+        <div id="stockList"></div>
+        <div class="calc-result" style="margin-top:12px">
+          <div>
+            <div class="calc-result-label">本月股票總投入</div>
+          </div>
+          <div class="calc-result-value" id="stockTotalDisplay">NT$ 18,400</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Nav -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-nav="overview" onclick="switchNav('overview',this)">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="2" y="2" width="8" height="8" rx="2" fill="#c9a84c"/>
+          <rect x="12" y="2" width="8" height="8" rx="2" fill="#c9a84c"/>
+          <rect x="2" y="12" width="8" height="8" rx="2" fill="#c9a84c"/>
+          <rect x="12" y="12" width="8" height="8" rx="2" fill="#c9a84c"/>
+        </svg>
+      </div>
+      <span class="nav-label">總覽</span>
+    </div>
+    <div class="nav-item" data-nav="daily" onclick="switchNav('daily',this)">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <rect x="3" y="3" width="16" height="16" rx="3" stroke="#4a4d58" stroke-width="1.8" fill="none"/>
+          <path d="M7 8h8M7 12h5" stroke="#4a4d58" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <span class="nav-label">消費</span>
+    </div>
+    <div class="nav-item" data-nav="income" onclick="switchNav('income',this)">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <circle cx="11" cy="11" r="8" stroke="#4a4d58" stroke-width="1.8" fill="none"/>
+          <path d="M11 7v8M8 10l3-3 3 3" stroke="#4a4d58" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <span class="nav-label">收入</span>
+    </div>
+    <div class="nav-item" data-nav="stock" onclick="switchNav('stock',this)">
+      <div class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+          <path d="M3 16l5-5 4 3 7-8" stroke="#4a4d58" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+        </svg>
+      </div>
+      <span class="nav-label">股票</span>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+</div>
+
+<script>
+// ===== DATA STORE =====
+const state = {
+  transactions: [
+    { id:1, name:'全聯福利中心', amount:320, category:'飲食', date:'2026-04-24', ai:false },
+    { id:2, name:'UNIQLO', amount:1890, category:'服飾', date:'2026-04-22', ai:false },
+    { id:3, name:'馥悅養生館', amount:1200, category:'按摩 / 保健', date:'2026-04-20', ai:true },
+    { id:4, name:'台電電費', amount:960, category:'電費 / 水費', date:'2026-04-18', ai:true },
+    { id:5, name:'麥當勞', amount:185, category:'飲食', date:'2026-04-17', ai:false },
+    { id:6, name:'捷運悠遊卡', amount:500, category:'交通', date:'2026-04-15', ai:false },
+  ],
+  incomes: [
+    { id:1, name:'月薪', amount:50000, type:'薪資', date:'2026-04-25', fixed:true },
+    { id:2, name:'兼職設計', amount:8000, type:'兼職', date:'2026-04-10', fixed:false },
+  ],
+  stocks: [
+    { id:1, code:'2330 台積電', price:925, shares:10, cost:9276.31, date:'2026-04-20' },
+    { id:2, code:'0050 元大台灣50', price:183.5, shares:50, cost:9188.69, date:'2026-04-08' },
+  ],
+  currentFilter: 'all'
+};
+
+// ===== INIT =====
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  document.getElementById('txDate').value = today.toISOString().split('T')[0];
+  document.getElementById('incomeDate').value = today.toISOString().split('T')[0];
+  renderTransactions();
+  renderIncomes();
+  renderStocks();
+  updateOverview();
+  initChips();
+});
+
+// ===== NAVIGATION =====
+function switchNav(tab, el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach(t => { if(t.dataset.tab === tab) t.classList.add('active'); else t.classList.remove('active'); });
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById('section-' + tab).classList.add('active');
+}
+
+document.querySelectorAll('.nav-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    const t = tab.dataset.tab;
+    document.querySelectorAll('.nav-tab').forEach(x => x.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => { if(n.dataset.nav === t) n.classList.add('active'); else n.classList.remove('active'); });
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.getElementById('section-' + t).classList.add('active');
+  });
+});
+
+// ===== CATEGORY ICONS =====
+const catConfig = {
+  '飲食':        { bg:'rgba(224,92,92,0.15)', color:'#e05c5c', symbol:'F' },
+  '服飾':        { bg:'rgba(155,109,224,0.15)', color:'#9b6de0', symbol:'C' },
+  '按摩 / 保健': { bg:'rgba(201,168,76,0.15)', color:'#c9a84c', symbol:'M' },
+  '電費 / 水費': { bg:'rgba(92,143,224,0.15)', color:'#5c8fe0', symbol:'E' },
+  '交通':        { bg:'rgba(76,175,130,0.15)', color:'#4caf82', symbol:'T' },
+  '娛樂':        { bg:'rgba(224,140,92,0.15)', color:'#e08c5c', symbol:'X' },
+  '教育':        { bg:'rgba(92,200,224,0.15)', color:'#5cc8e0', symbol:'S' },
+  '醫療':        { bg:'rgba(224,92,150,0.15)', color:'#e05c96', symbol:'H' },
+  '其他':        { bg:'rgba(139,141,150,0.15)', color:'#8b8d96', symbol:'O' },
+};
+
+function getCatConf(cat) { return catConfig[cat] || catConfig['其他']; }
+
+// ===== RENDER TRANSACTIONS =====
+function renderTransactions() {
+  const list = document.getElementById('txList');
+  const filter = state.currentFilter;
+  const filtered = filter === 'all' ? state.transactions : state.transactions.filter(t => t.category === filter);
+  if (filtered.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">目前沒有記錄</div>';
+    return;
+  }
+  list.innerHTML = filtered.map(tx => {
+    const c = getCatConf(tx.category);
+    const tag = tx.ai ? '<span class="tag tag-ai">AI</span>' : '<span class="tag tag-manual">手動</span>';
+    return `<div class="tx-item">
+      <div class="tx-icon" style="background:${c.bg}; color:${c.color}">${c.symbol}</div>
+      <div class="tx-info">
+        <div class="tx-name">${tx.name}</div>
+        <div class="tx-meta">${tx.category} &nbsp; ${tag} &nbsp; ${tx.date}</div>
+      </div>
+      <div class="tx-amount expense">-${tx.amount.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+}
+
+// ===== RENDER INCOMES =====
+function renderIncomes() {
+  const list = document.getElementById('incomeList');
+  if (state.incomes.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">目前沒有收入記錄</div>';
+    return;
+  }
+  list.innerHTML = state.incomes.map(inc => {
+    const tag = inc.fixed ? '<span class="tag tag-fixed">固定</span>' : '<span class="tag tag-manual">單筆</span>';
+    return `<div class="tx-item">
+      <div class="tx-icon" style="background:rgba(76,175,130,0.15);color:#4caf82;font-size:12px;font-weight:700">IN</div>
+      <div class="tx-info">
+        <div class="tx-name">${inc.name}</div>
+        <div class="tx-meta">${inc.type} &nbsp; ${tag} &nbsp; ${inc.date}</div>
+      </div>
+      <div class="tx-amount income">+${inc.amount.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+}
+
+// ===== RENDER STOCKS =====
+function renderStocks() {
+  const list = document.getElementById('stockList');
+  if (state.stocks.length === 0) {
+    list.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px">目前沒有交易記錄</div>';
+    return;
+  }
+  list.innerHTML = state.stocks.map(s => `
+    <div class="stock-item">
+      <div class="stock-badge">${s.code.split(' ')[0]}</div>
+      <div class="stock-info">
+        <div class="stock-name">${s.code}</div>
+        <div class="stock-detail">@${s.price.toLocaleString()} x ${s.shares} 股 &nbsp; ${s.date}</div>
+      </div>
+      <div class="stock-cost">NT$${Math.round(s.cost).toLocaleString()}</div>
+    </div>`).join('');
+  const total = state.stocks.reduce((a,s) => a + s.cost, 0);
+  document.getElementById('stockTotalDisplay').textContent = 'NT$ ' + Math.round(total).toLocaleString();
+}
+
+// ===== UPDATE OVERVIEW =====
+function updateOverview() {
+  const dailyTotal = state.transactions.reduce((a,t) => a + t.amount, 0);
+  const stockTotal = state.stocks.reduce((a,s) => a + s.cost, 0);
+  const incomeTotal = state.incomes.reduce((a,i) => a + i.amount, 0);
+  const totalExp = dailyTotal + stockTotal;
+  const net = incomeTotal - totalExp;
+  const pct = ((totalExp / incomeTotal) * 100).toFixed(1);
+
+  document.getElementById('netBalance').textContent = net.toLocaleString();
+  document.getElementById('totalIncome').textContent = '+' + incomeTotal.toLocaleString();
+  document.getElementById('totalExpense').textContent = '-' + Math.round(totalExp).toLocaleString();
+  document.getElementById('ov-daily').textContent = dailyTotal.toLocaleString();
+  document.getElementById('ov-daily-count').textContent = state.transactions.length + ' 筆記錄';
+  document.getElementById('ov-stock').textContent = Math.round(stockTotal).toLocaleString();
+  document.getElementById('ov-stock-count').textContent = state.stocks.length + ' 筆交易';
+  document.getElementById('ov-total').textContent = Math.round(totalExp).toLocaleString();
+  document.getElementById('ov-pct').textContent = pct + '%';
+
+  const balStat = document.getElementById('balanceStatus');
+  if (net >= 0) { balStat.textContent = '收支良好 +' + pct + '%'; balStat.className = 'balance-sub'; }
+  else { balStat.textContent = '支出超過收入 -' + pct + '%'; balStat.className = 'balance-sub negative'; }
+}
+
+// ===== ADD TRANSACTION =====
+function addTransaction() {
+  const name = document.getElementById('txName').value.trim();
+  const amount = parseFloat(document.getElementById('txAmount').value);
+  const category = document.getElementById('txCategory').value;
+  const date = document.getElementById('txDate').value;
+  if (!name || !amount || amount <= 0) { showToast('請填寫商店名稱與金額'); return; }
+  state.transactions.unshift({ id: Date.now(), name, amount, category, date: date || new Date().toISOString().split('T')[0], ai: false });
+  document.getElementById('txName').value = '';
+  document.getElementById('txAmount').value = '';
+  renderTransactions();
+  updateOverview();
+  showToast('消費記錄已新增');
+}
+
+// ===== ADD INCOME =====
+function addIncome() {
+  const name = document.getElementById('incomeName').value.trim();
+  const amount = parseFloat(document.getElementById('incomeAmount').value);
+  const type = document.getElementById('incomeType').value;
+  const date = document.getElementById('incomeDate').value;
+  if (!name || !amount || amount <= 0) { showToast('請填寫收入名稱與金額'); return; }
+  state.incomes.unshift({ id: Date.now(), name, amount, type, date: date || new Date().toISOString().split('T')[0], fixed: false });
+  document.getElementById('incomeName').value = '';
+  document.getElementById('incomeAmount').value = '';
+  renderIncomes();
+  updateOverview();
+  showToast('收入記錄已新增');
+}
+
+function addFixedIncome() {
+  const name = document.getElementById('fixedName').value.trim();
+  const amount = parseFloat(document.getElementById('fixedAmount').value);
+  const day = document.getElementById('fixedDay').value;
+  if (!name || !amount || amount <= 0) { showToast('請填寫固定收入資訊'); return; }
+  const d = new Date();
+  const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+  state.incomes.unshift({ id: Date.now(), name: name + ' (固定)', amount, type: '薪資', date: dateStr, fixed: true });
+  document.getElementById('fixedName').value = '';
+  document.getElementById('fixedAmount').value = '';
+  renderIncomes();
+  updateOverview();
+  showToast('固定收入已設定，每月自動新增');
+}
+
+// ===== STOCK CALC =====
+function calcStock() {
+  const price = parseFloat(document.getElementById('stockPrice').value) || 0;
+  const shares = parseFloat(document.getElementById('stockShares').value) || 0;
+  const base = price * shares;
+  const fee = Math.max(20, base * 0.001425);
+  const total = base + fee;
+  document.getElementById('stockCalcResult').textContent = 'NT$ ' + (total > 0 ? total.toLocaleString('zh-TW', {maximumFractionDigits:0}) : '0');
+}
+
+function addStock() {
+  const code = document.getElementById('stockCode').value.trim();
+  const price = parseFloat(document.getElementById('stockPrice').value);
+  const shares = parseFloat(document.getElementById('stockShares').value);
+  if (!code || !price || !shares) { showToast('請填寫完整股票資訊'); return; }
+  const base = price * shares;
+  const fee = Math.max(20, base * 0.001425);
+  const cost = base + fee;
+  state.stocks.unshift({ id: Date.now(), code, price, shares, cost, date: new Date().toISOString().split('T')[0] });
+  document.getElementById('stockCode').value = '';
+  document.getElementById('stockPrice').value = '';
+  document.getElementById('stockShares').value = '';
+  document.getElementById('stockCalcResult').textContent = 'NT$ 0';
+  renderStocks();
+  updateOverview();
+  showToast('股票交易已記錄');
+}
+
+// ===== UPLOAD SIMULATION =====
+function handleUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const zone = document.getElementById('uploadZone');
+  zone.style.borderColor = 'var(--accent-purple)';
+  zone.querySelector('.upload-text').textContent = 'AI 辨識中...';
+  zone.querySelector('.upload-sub').textContent = '正在分析發票內容';
+  setTimeout(() => {
+    zone.style.borderColor = 'var(--accent-green)';
+    zone.querySelector('.upload-text').textContent = '辨識完成！';
+    zone.querySelector('.upload-sub').textContent = '已自動填入以下欄位';
+    document.getElementById('txName').value = '統一超商';
+    document.getElementById('txAmount').value = '68';
+    document.getElementById('txCategory').value = '飲食';
+    showToast('AI 辨識完成！請確認後按新增');
+    setTimeout(() => {
+      zone.style.borderColor = '';
+      zone.querySelector('.upload-text').textContent = '拍攝或上傳發票';
+      zone.querySelector('.upload-sub').textContent = '支援 JPG、PNG，AI 將自動辨識金額與類別';
+    }, 3000);
+  }, 2000);
+}
+
+// ===== CATEGORY FILTER =====
+function initChips() {
+  document.querySelectorAll('#filterChips .chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+      document.querySelectorAll('#filterChips .chip').forEach(c => c.classList.remove('selected'));
+      chip.classList.add('selected');
+      state.currentFilter = chip.dataset.cat;
+      renderTransactions();
+    });
+  });
+}
+
+// ===== INCOME MODE TOGGLE =====
+function setIncomeMode(mode, btn) {
+  document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('manualIncomeForm').style.display = mode === 'manual' ? 'block' : 'none';
+  document.getElementById('fixedIncomeForm').style.display = mode === 'fixed' ? 'block' : 'none';
+}
+
+// ===== TOAST =====
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
